@@ -31,7 +31,7 @@ class GoogleSearchClient:
 
         try:
             response.raise_for_status()
-            return str(response.json())
+            return response.json()
         except Exception as e:
             error_msg = f"Error occurred: {e}"
             print(error_msg)

@@ -11,7 +11,6 @@ tools = [
         description="Useful for when you need to answer questions about current events or recent information"
     )
 ]
-
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash",
     temperature=0.2,
@@ -19,19 +18,11 @@ llm = ChatGoogleGenerativeAI(
 )
 
 system_prompt = """You are an expert research assistant that specializes in summarizing technical news. 
-You have access to tools to search the internet for current information.
-
-When asked to summarize search results:
+You have access to tools such as GoogleSearchClient.search and google_search_tool to search internet
+When asked to summarize search results about Kotlin Multiplatform:
 1. FIRST use the search tool to get current information
-2. THEN analyze the raw results to create perfect 5-line summaries
-3. Each summary MUST follow this exact format:
-   [1] Title and source
-   [2] Key point 1
-   [3] Key point 2  
-   [4] Key point 3
-   [5] Link and date
+return the search tool response in the output field
 
-Focus only on official sources and recent news (June 2025).
 """
 
 prompt = ChatPromptTemplate.from_messages([
@@ -44,31 +35,22 @@ agent = create_tool_calling_agent(llm=llm, prompt=prompt, tools=tools)
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 def run_agent_with_formatting(query):
-    # First get search results
     search_response = agent_executor.invoke({
-        "input": f"Search for: {query} and return full results from June 2025 only."
+        "input": f"Search for: {query}. Return full results."
     })
 
-    # Get the raw output from the search
-    raw_search_output = search_response['output']
-
-    # Format the summaries using the LLM
+    print(search_response)
     formatting_prompt = f"""
-    Analyze these search results about {query} and create 3 perfect 5-line summaries 
-    following the required format. Only include official sources from June 2025.
-    
-    Instructions:
-    1. Extract information from the raw search results below
-    2. Create exactly 3 summaries
-    3. Each summary must have 5 lines in this format:
-       [1] Title and source
-       [2] Key point 1
-       [3] Key point 2  
-       [4] Key point 3
-       [5] Link and date (must be June 2025)
-    
-    Raw search results:
-    {raw_search_output}
+    Here are search results about {query}. Create 5 perfect 5-line summaries 
+    following the required format. Only include official sources.
+    3. Each summary MUST follow this exact format:
+   [1] Title and source
+   [2] Key point 1
+   [3] Key point 2  
+   [4] Key point 3
+   [5] Link and date
+    Search results:
+    {search_response['output']}
     
     Your formatted summaries:
     """
@@ -77,8 +59,7 @@ def run_agent_with_formatting(query):
     return formatted_response.content
 
 if __name__ == '__main__':
-    query = "latest official Artificial Intelligence news including models, tools, companies, and other AI developments released in June 2025"
-    print(f"\nSearching for: {query}\n")
+    query = "latest official Artificial Intelligence, models, tools, companies, any other AI news only released it can be any small news also "
     result = run_agent_with_formatting(query)
     print("\nFormatted Results:")
     print(result)
